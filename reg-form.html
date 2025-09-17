@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0px;
+            padding: 0px;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(233, 233, 222);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23d5ab, #23a6d5);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        #form{
+            margin: 10px 10px;
+            padding: 10px 10px;
+            width: 250px;
+            height: 275px;
+        }
+        #allData{
+            line-height: 30px;
+            margin: auto;
+            padding: 10px;
+            animation: fadeScale 3s ease-in-out infinite alternate;
+            background: rgba(255, 255, 255, 0.15);  /* semi-transparent */
+            backdrop-filter: blur(10px);             /* blur behind */
+            -webkit-backdrop-filter: blur(10px);     /* Safari support */
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        @keyframes fadeScale {
+            0% {
+                opacity: 0.7;
+                transform: scale(0.95);
+                box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            }
+        }
+        #allData>input{
+            height: 30px;
+            width: 200px;
+            font-size: 16px;
+            padding: 0px 5px;
+        }
+        input::placeholder{
+            font-size: 18px;
+        }
+        #message {
+            margin-top: 10px;
+            font-size: 14px;
+            height: 20px;
+            color: red;
+        }
+        #message.success {
+            color: green;
+        }
+        #allData>h1{
+            text-align: center;
+            /* animation: fadeScale 3s ease-in-out infinite alternate; */
+        }
+    </style>
+</head>
+<body>
+    <div id="form">
+        <div id="allData">
+            <h1>Register</h1>
+            <input type="text" id="name" placeholder="Name">
+            <br><br>
+            <input type="email" id="email" placeholder="Email">
+            <br>
+            <br>
+            <input type="password" id="password" placeholder="Password">
+            <br> <br>
+            <button id="regbtn" onclick="postData()">Register</button>
+            <div id="message"></div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script>
+    async function postData(){
+        let nameInput = document.getElementById('name')
+        let emailInput = document.getElementById('email')
+        let passInput = document.getElementById('password')
+        let messageDiv = document.getElementById("message");
+
+        messageDiv.textContent = ""; // clear previous messages
+        messageDiv.classList.remove("success")
+
+        let nameValue = nameInput.value.trim()
+        let emailValue = emailInput.value.trim()
+        let passValue = passInput.value.trim()
+
+        if(nameValue==""){
+            messageDiv.textContent = "Name box is empty!"
+            return
+        }else if(emailValue===""){
+            messageDiv.textContent = "Email box is empty!"
+            return
+        }else if(passValue===""){
+            messageDiv.textContent = "Password box is empty!";
+            return
+        }
+
+        try {
+            let res = await fetch('https://68cb04c2430c4476c34bc95a.mockapi.io/api/v1/users')
+            let userRes = await res.json()
+            let emailCheck = userRes.filter((user)=>{
+                return user.email.toLowerCase()===emailValue.toLowerCase()
+            })
+            if(emailCheck.length>0){
+                messageDiv.textContent = "Email already exists, please use another email."
+                return
+            }
+
+            let data = await fetch('https://68cb04c2430c4476c34bc95a.mockapi.io/api/v1/users', 
+                {
+                    method : 'POST',
+                    headers : {
+                        'Content-Type' : 'application/json'
+                    },
+                    body : JSON.stringify({
+                        name : nameValue,
+                        email : emailValue,
+                        password : passValue
+                    })
+                }
+            )
+            
+            if(data.ok){
+                messageDiv.textContent = "User registered successfully!";
+                messageDiv.classList.add("success");
+                nameInput.value = ""
+                passInput.value = ""
+                emailInput.value = ""
+            }else{
+                let errorData = await data.json();
+                // Show API error message if available
+                messageDiv.textContent = errorData.message || "Registration failed. Please try again.";
+            }
+        } catch (error) {
+            console.log(error)
+            messageDiv.textContent = "An error occurred while registering. Please try again.";
+        }
+    }
+</script>
